@@ -6,9 +6,9 @@ from pymatch.Matcher import Matcher
 class MatcherPlus(Matcher):
     """ Matcher Class with faster Nearest Neighbor Matching algorithms """
 
-    def __init__(self, test, control, yvar, formula = None, exclude = [], nmatches = 1):
+    def __init__(self, test, control, yvar, formula = None, exclude = []):
         super().__init__(test, control, yvar, formula, exclude)
-        self.nmatches_ = nmatches
+        self.nmatches_ = 1
         self.indices_ = []
         self.match_ids_ = []
         self.cur_match_id_ = 0
