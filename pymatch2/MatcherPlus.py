@@ -160,3 +160,36 @@ class MatcherPlus(Matcher):
                 r = mid
                 break
         return match
+
+    def match_merge(self, nmatches = 1):
+        """ Matching using merge-sort alike algorithm """
+        if "scores" not in self.data.columns:
+            print("Propensity Scores have not been calculated. Using defaults...")
+            self.fit_scores()
+            self.predict_scores()
+
+        df_test = self.data[self.data[self.yvar] == True]
+        df_ctrl = self.data[self.data[self.yvar] == False]
+        df_test = df_test.sort_values("scores").reset_index(drop = True)
+        df_ctrl = df_ctrl.sort_values("scores").reset_index(drop = True)
+        self.indices_ = [] ## indices of `df_ctrl' after matching
+        self.match_ids_ = list(range(df_test.shape[0])) ## match_ids of `matched_data'
+        self.nmatches_ = nmatches
+
+        ntest = df_test.shape[0]
+        nctrl = df_ctrl.shape[0]
+        jctrl = 0
+        for i in range(ntest):
+            iscore = df_test.iloc[i]["scores"]
+            while (jctrl < nctrl) and (df_ctrl.iloc[jctrl]["scores"] < iscore):
+                jctrl += 1
+            eidx = (df_ctrl.shape[0] - 1)
+            ## it must be true that (scores[jctrl-1] <= iscore <= scores[jctrl])
+            ##   thus (-1, jctrl-1], (jctrl-1, eidx]
+            indices = self._merge(iscore, df_ctrl, -1, jctrl - 1, jctrl - 1, eidx)
+            self.indices_.extend(indices)
+            self.match_ids_.extend([i] * len(indices))
+
+        self.matched_data = pd.concat([df_test, df_ctrl.loc[self.indices_]], axis = 0)
+        self.matched_data["match_id"] = self.match_ids_
+        self.matched_data["record_id"] = self.matched_data.index

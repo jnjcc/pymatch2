@@ -82,6 +82,8 @@ class MatcherTest:
             self.matcher_.match_nnm(nmatches = nmatches)
         elif method == "bs":
             self.matcher_.match_bs(nmatches = nmatches)
+        elif method == "merge":
+            self.matcher_.match_merge(nmatches = nmatches)
         else:
             self.matcher_.match(method = method, nmatches = nmatches, threshold = threshold)
         end = timeit.default_timer()
@@ -106,7 +108,10 @@ class MatcherTest:
         bs_time, bs_matched = self.timed_match("bs", nmatches = nmatches, threshold = threshold)
         assert self.compare_.less_eql(bs_matched, rnd_matched)
 
-        print(self.ntest_, self.nctrl_, rnd_time, "-", nnm_time, bs_time)
+        mt_time, mt_matched = self.timed_match("merge", nmatches = nmatches, threshold = threshold)
+        assert self.compare_.less_eql(mt_matched, rnd_matched)
+
+        print(self.ntest_, self.nctrl_, rnd_time, "-", nnm_time, bs_time, mt_time)
 
     def assert_eq(self, nmatches = 1, threshold = 0.001):
         """ nnm match equal to min match """
@@ -128,14 +133,18 @@ class MatcherTest:
         bs_time, bs_matched = self.timed_match("bs", nmatches = nmatches, threshold = threshold)
         assert self.compare_.equal(nnm_matched, bs_matched)
 
-        print(self.ntest_, self.nctrl_, rnd_time, min_time, nnm_time, bs_time)
+        mt_time, mt_matched = self.timed_match("merge", nmatches = nmatches, threshold = threshold)
+        assert self.compare_.equal(nnm_matched, mt_matched)
+
+        print(self.ntest_, self.nctrl_, rnd_time, min_time, nnm_time, bs_time, mt_time)
 
 if __name__ == "__main__":
-    print("# test", "# control", "random", "min", "nnm", "bs", flush = True)
+    np.random.seed(1024)
+    print("# test", "# control", "random", "min", "nnm", "bs", "merge", flush = True)
     for ntest, nctrl in [(10000, 200000), (15000, 200000), (20000, 200000)]:
         test = MatcherTest(ntest, nctrl)
         test.assert_match()
 
-    for ntest, nctrl in [(50000, 900000), (100000, 1000000)]:
+    for ntest, nctrl in [(50000, 900000), (100000, 1000000), (500000, 5000000)]:
         test = MatcherTest(ntest, nctrl)
         test.assert_le()
